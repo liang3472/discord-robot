@@ -214,12 +214,12 @@ const getAnswer = (question, options) => {
 
 const getQuestion = async () => {
   const messages = document.querySelector('.scrollerInner-2PPAp2')?.childNodes;
-  const question = messages?.[messages?.length - 2]?.querySelector('.embedAuthorName-pGyUPR')?.innerHTML;
+  const question = messages?.[messages?.length - 2]?.querySelectorAll('.grid-1aWVsE div')?.[1]?.innerHTML;
   const answerDom = messages?.[messages?.length - 2]?.querySelector('.embedDescription-1DrJxZ')?.childNodes || [];
   const options = Array.from(answerDom).map(e => e?.data?.trim()).filter(e => !!e);
   const isQuestionMsg = !!messages?.[messages?.length - 2].querySelector('.embedFooterText-2Mc7H9');
 
-  if(!options.length || !question || !isQuestionMsg) {
+  if (!options.length || !question || !isQuestionMsg) {
     console.log('%c----->抱歉没有答案', 'font-size:50px;color:red;');
     return;
   }

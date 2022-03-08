@@ -17,10 +17,10 @@ chrome.storage.sync.get(['token'], function (result) {
 
 const updateState = (action) => {
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, { action, token: tokenInput.value }, ({ flag }) => {
+    chrome.tabs.sendMessage(tabs[0].id, { action, token: tokenInput.value }, data => {
       if (btnAiTalk) {
-        btnAiTalk.style.backgroundColor = flag ? 'green' : 'red';
-        btnAiTalk.innerHTML = flag ? 'on' : 'off';
+        btnAiTalk.style.backgroundColor = data?.flag ? 'green' : 'red';
+        btnAiTalk.innerHTML = data?.flag ? 'on' : 'off';
       }
     });
   });
