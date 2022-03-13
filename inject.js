@@ -1,5 +1,5 @@
 let AUTH = '';
-const DEALY = [5 * 1000, 10 * 1000]; // 最小间隔，最大间隔，随机发
+const DEALY = [1 * 60 * 1000, 1 * 60 * 1000 + 3000]; // 最小间隔，最大间隔，随机发
 const ignores = ['gm', 'gn', '肝'];
 const msgIdList = [];
 let flag = false;
@@ -228,13 +228,15 @@ const getQuestion = async () => {
     return res.json();
   });
 
-  if (+data?.[0]?.rate) {
+  const sortData = (data || []).sort((a, b) =>  b?.rate - a?.rate);
+
+  if (+sortData?.[0]?.rate) {
     console.log(`%c----->${question}`, 'font-size:25px;color:blue;');
-    data?.forEach((e, i) => {
+    sortData?.forEach((e, i) => {
       if (i === 0) {
-        console.log(`%c----->${data?.[0]?.option} ${data?.[0]?.rate}%`, 'font-size:25px;color:green;');
+        console.log(`%c----->${sortData?.[0]?.option} ${sortData?.[0]?.rate}%`, 'font-size:25px;color:green;');
       } else {
-        console.log(`%c----->${data?.[i]?.option} ${data?.[i]?.rate}%`, 'font-size:20px;color:red;');
+        console.log(`%c----->${sortData?.[i]?.option} ${sortData?.[i]?.rate}%`, 'font-size:20px;color:red;');
       }
     });
   } else {
