@@ -11,13 +11,26 @@ const tokenInput = document.getElementById("tokenInput");
 const setToken = document.getElementById("setToken");
 btnAnswer.style.backgroundColor = 'green';
 
-chrome.storage.sync.get(['token'], function (result) {
+const timeInput = document.getElementById("timeInput");
+const setTime = document.getElementById("setTime");
+
+const wordsInput = document.getElementById("wordsInput");
+const setWords = document.getElementById("setWords");
+
+chrome.storage.sync.get(['token', 'time', 'msg'], function (result) {
   tokenInput.value = result?.token || '';
+  timeInput.value = result?.time || null;
+  wordsInput.value = result?.msg || null;
 });
 
 const updateState = (action) => {
   chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, { action, token: tokenInput.value }, data => {
+    chrome.tabs.sendMessage(tabs[0].id, {
+      action,
+      token: tokenInput?.value,
+      time: timeInput?.value,
+      msg: wordsInput?.value
+    }, data => {
       if (btnAiTalk) {
         btnAiTalk.style.backgroundColor = data?.flag ? 'green' : 'red';
         btnAiTalk.innerHTML = data?.flag ? 'on' : 'off';
@@ -35,7 +48,6 @@ const setState = () => {
 }
 
 updateState();
-// When the button is clicked, inject setPageBackgroundColor into current page
 btnAiTalk.addEventListener("click", async () => {
   setState();
 });
@@ -49,5 +61,17 @@ btnAnswer.addEventListener("click", async () => {
 setToken.addEventListener("click", async () => {
   chrome.storage.sync.set({ token: tokenInput.value }, function () {
     console.log('token is set: ' + tokenInput.value);
+  });
+});
+
+setTime.addEventListener("click", async () => {
+  chrome.storage.sync.set({ time: timeInput.value }, function () {
+    console.log('time is set: ' + timeInput.value);
+  });
+});
+
+setWords.addEventListener("click", async () => {
+  chrome.storage.sync.set({ msg: wordsInput.value }, function () {
+    console.log('msg is set: ' + wordsInput.value);
   });
 });
