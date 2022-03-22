@@ -1,5 +1,7 @@
 let AUTH = '';
-const DEALY = [1 * 60 * 1000, 1 * 60 * 1000 + 3000]; // 最小间隔，最大间隔，随机发
+const TIME = 1 * 60 * 1000; // 默认延迟1min
+let DELAY = [TIME, TIME + 3000]; // 最小间隔，最大间隔，随机发， 加3s浮动
+let staticMsg = undefined;
 const ignores = ['gm', 'gn', '肝'];
 const msgIdList = [];
 let flag = false;
@@ -116,63 +118,69 @@ let lastMsg;
 let myLastMsg;
 const exec = async () => {
   if (!flag) return;
-  let time = randomTime((DEALY?.[0] || 6 * 1000), (DEALY?.[1] || 6 * 60 * 1000));
-  const messages = document.querySelector('.scrollerInner-2PPAp2')?.childNodes;
-  // 先检测有没有被@，有则先回复，无则继续往下
-  const reply = getReply(messages);
-  let currMsg;
-  let currRole;
-  if (reply) {
-    currMsg = reply?.message;
-    currRole = reply?.role;
-  } else {
-    currMsg = messages?.[messages?.length - 2]?.querySelector('.contents-2MsGLg div')?.innerHTML;
-    currRole = messages?.[messages?.length - 2]?.querySelector('.contents-2MsGLg h2 span span')?.innerHTML;
-  }
-
-  var regex = new RegExp("[`~!@#$^&*()=|{}':;',\\[\\].<>]");
-  if (currRole && currMsg &&
-    lastMsg != currMsg && myLastMsg != currMsg &&
-    !regex.test(currMsg) && !ignores.some(e => currMsg?.indexOf(e) > 0)) {
-    lastMsg = currMsg;
-    const result = await getMessage(currMsg).then(res => {
+  let time = randomTime((DELAY?.[0] || TIME), (DELAY?.[1] || TIME + 3000));
+  if (staticMsg) {
+    mockTypeing();
+    sendMsg(staticMsg).then(res => {
       return res.json();
     });
-    console.log(`%c-----> ${currRole}: ${currMsg}`, 'font-size:30px;color:blue;');
-    try {
-      if (result?.data?.length > 20) {
-        console.log('%c-----> 不回复超长了', 'font-size:30px;color:red;');
-        time = 1000;
-      } else {
-        if (reply) {
-          console.log(`%c-----> 我回复${reply?.role}: ${result?.data}`, 'font-size:30px;color:red;');
-        } else {
-          console.log(`%c-----> 我: ${result?.data}`, 'font-size:30px;color:red;');
-        }
-        mockTypeing();
-        myLastMsg = result?.data;
-        setTimeout(async () => {
-          let data;
-          if (reply) {
-            data = await replyMsg(result?.data, reply).then(res => {
-              return res.json();
-            });
-          } else {
-            data = await sendMsg(result?.data).then(res => {
-              return res.json();
-            });
-          }
-
-          pushId2List(data?.id);
-        }, 1000);
-      }
-    } catch (e) {
-      console.log('%c-----> 本次不回复', 'font-size:30px;color:red;');
-    }
   } else {
-    console.log('%c-----> 不回复', 'font-size:30px;color:red;');
-  }
+    const messages = document.querySelector('.scrollerInner-2PPAp2')?.childNodes;
+    // 先检测有没有被@，有则先回复，无则继续往下
+    const reply = getReply(messages);
+    let currMsg;
+    let currRole;
+    if (reply) {
+      currMsg = reply?.message;
+      currRole = reply?.role;
+    } else {
+      currMsg = messages?.[messages?.length - 2]?.querySelector('.contents-2MsGLg div')?.innerHTML;
+      currRole = messages?.[messages?.length - 2]?.querySelector('.contents-2MsGLg h2 span span')?.innerHTML;
+    }
 
+    var regex = new RegExp("[`~!@#$^&*()=|{}':;',\\[\\].<>]");
+    if (currRole && currMsg &&
+      lastMsg != currMsg && myLastMsg != currMsg &&
+      !regex.test(currMsg) && !ignores.some(e => currMsg?.indexOf(e) > 0)) {
+      lastMsg = currMsg;
+      const result = await getMessage(currMsg).then(res => {
+        return res.json();
+      });
+      console.log(`%c-----> ${currRole}: ${currMsg}`, 'font-size:30px;color:blue;');
+      try {
+        if (result?.data?.length > 20) {
+          console.log('%c-----> 不回复超长了', 'font-size:30px;color:red;');
+          time = 1000;
+        } else {
+          if (reply) {
+            console.log(`%c-----> 我回复${reply?.role}: ${result?.data}`, 'font-size:30px;color:red;');
+          } else {
+            console.log(`%c-----> 我: ${result?.data}`, 'font-size:30px;color:red;');
+          }
+          mockTypeing();
+          myLastMsg = result?.data;
+          setTimeout(async () => {
+            let data;
+            if (reply) {
+              data = await replyMsg(result?.data, reply).then(res => {
+                return res.json();
+              });
+            } else {
+              data = await sendMsg(result?.data).then(res => {
+                return res.json();
+              });
+            }
+
+            pushId2List(data?.id);
+          }, 1000);
+        }
+      } catch (e) {
+        console.log('%c-----> 本次不回复', 'font-size:30px;color:red;');
+      }
+    } else {
+      console.log('%c-----> 不回复', 'font-size:30px;color:red;');
+    }
+  }
   timer = setTimeout(exec, time);
 };
 
@@ -185,6 +193,9 @@ chrome.runtime.onMessage.addListener(
       } else {
         console.log('%c-----> 3s 后进入ai🤖️聊天', 'font-size:50px;color:red;');
         AUTH = request?.token;
+        let rwTime = Number(request?.time) || TIME;
+        DELAY = [rwTime, rwTime + 3000];
+        staticMsg = request?.msg || undefined;
         timer = setTimeout(() => {
           exec();
         }, 3000);
@@ -228,7 +239,7 @@ const getQuestion = async () => {
     return res.json();
   });
 
-  const sortData = (data || []).sort((a, b) =>  b?.rate - a?.rate);
+  const sortData = (data || []).sort((a, b) => b?.rate - a?.rate);
 
   if (+sortData?.[0]?.rate) {
     console.log(`%c----->${question}`, 'font-size:25px;color:blue;');
